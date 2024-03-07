@@ -60,7 +60,9 @@ app.post('/register', async (req, res) => {
 
   app.get('/get_users', async (req, res) => {
     try {
-      const users = await UserModel.find();
+      const users = await UserModel.find().select({
+        password: 0
+      });
       res.json({responseCode: '030', responseMessage: 'records found', data: users});
   
     } catch (error) {
@@ -162,9 +164,9 @@ app.post('/login', async (req, res) => {
 //         res.json(oldestUser); 
 // });
 
-app.post('/update_user/:_id', async (req, res) => {
+app.post('/update_user', async (req, res) => {
     try {
-      const id = req.params._id;
+      const id = req.body._id;
   
       // Use findByIdAndUpdate to update the user by _id
       const updatedUser = await UserModel.findByIdAndUpdate(
@@ -186,11 +188,10 @@ app.post('/update_user/:_id', async (req, res) => {
   });
   
 
-  app.delete('/delete_user/:id', async (req, res) => {
+  app.delete('/delete_user', async (req, res) => {
     try {
-      const id = req.params.id;
+      const id = req.body.id;
   
-      // Use findByIdAndDelete to delete the user by _id
       const deletedUser = await UserModel.findByIdAndDelete(id);
   
       if (deletedUser) {
@@ -204,6 +205,64 @@ app.post('/update_user/:_id', async (req, res) => {
       res.status(500).json({ responseCode: '021', responseMessage: 'Internal Server Error' });
     }
   });
+
+// app.post('/change_password', async (req, res) => {
+//   try {
+//      id = req.body._id;
+//     const newPassword = req.body.password;
+
+//     const updatedPassword = await UserModel.findByIdAndUpdate(
+//       id,
+//       { password: bcrypt.hashSync(newPassword, 8) },
+//       { new: false }
+//     );
+    
+
+//     if (updatedPassword) {
+//       res.json({ responseCode: '017', responseMessage: 'Pasword updated'});
+//     } else {
+//       res.json({ responseCode: '018', responseMessage: 'No record found' });
+//     }
+
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ responseCode: '015', responseMessage: 'Internal Server Error' });
+//   }
+// })
+
+app.post('/change_password', async (req, res) => {
+  try {
+    const id = req.body._id;
+    const oldPassword = req.body.oldPassword;
+    const newPassword = req.body.newPassword;
+
+    // Retrieve the user from the database
+    const user = await UserModel.findById(id);
+
+    // Validate old password
+    const isOldPasswordValid = bcrypt.compareSync(oldPassword, user.password);
+
+    if (!isOldPasswordValid) {
+      res.json({ responseCode: '019', responseMessage: 'Invalid old password' });
+    }
+
+    else{
+      res.json({ responseCode: '017', responseMessage: 'Pasword updated'});
+    }
+
+    // Update the password if the old password is valid
+    await UserModel.findByIdAndUpdate(
+      id,
+      { password: bcrypt.hashSync(newPassword, 8) },
+      { new: false }
+    );
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ responseCode: '015', responseMessage: 'Internal Server Error' });
+  }
+});
+
   
 
 //start server
