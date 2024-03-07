@@ -61,50 +61,71 @@ app.post('/register', async (req, res) => {
   app.get('/get_users', async (req, res) => {
     try {
       const users = await UserModel.find();
-      res.json({responseCode: '005', responseMessage: 'records found', data: users});
+      res.json({responseCode: '030', responseMessage: 'records found', data: users});
   
     } catch (error) {
       console.error(error);
-      res.status(500).json({ responseCode: '006', responseMessage: 'Internal Server Error' });
+      res.status(500).json({ responseCode: '004', responseMessage: 'Internal Server Error' });
     }
   });
   
 
-app.get('/get_user_by_id/:id', (req, res) => {
-    const id = parseInt(req.params.id);
-    const user = users.find(user => user.id === id);
-    if(user){
-        res.json(data: user); 
+app.get('/get_user_by_id/:_id', async (req, res) => {
+    try {
+      const id = req.params._id;
+  
+      const user = await UserModel.findOne({ _id:id });
+  
+      if (user) {
+        res.json({responseCode: '042', responseMessage: 'User exists', data: user});
+      } else {
+  
+        res.json({responseCode: '041', responseMessage: 'User does not exist'});
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ responseCode: '040', responseMessage: 'Internal Server Error' });
     }
-    else{
+  });
+  
 
-        res.json({responseCode: '001', responseMessage: 'user does not exist'})
+app.get('/get_user_by_name/:username', async (req, res) => {
+    try {
+      const username = req.params.username;
+  
+      const user = await UserModel.findOne({ username });
+  
+      if (user) {
+        res.json({responseCode: '008', responseMessage: 'User exists', data: user});
+      } else {
+  
+        res.json({responseCode: '009', responseMessage: 'User does not exist'});
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ responseCode: '010', responseMessage: 'Internal Server Error' });
     }
-});
+  });
+  
 
-app.get('/get_user_by_name/:name', (req, res) => {
-    const name = req.params.name;
-    const user = users.find(user => user.name === name);
-    if(user){
-        res.json(user); 
+app.get('/get_user_by_email/:email', async (req, res) => {
+    try {
+      const email = req.params.email;
+  
+      const user = await UserModel.findOne({ email });
+  
+      if (user) {
+        res.json({responseCode: '012', responseMessage: 'User exists', data: user});
+      } else {
+  
+        res.json({responseCode: '013', responseMessage: 'User does not exist'});
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ responseCode: '014', responseMessage: 'Internal Server Error' });
     }
-    else{
-
-        res.json({responseCode: '001', responseMessage: 'user does not exist'})
-    }
-});
-
-app.get('/get_user_by_email/:email', (req, res) => {
-    const email = (req.params.email);
-    const user = users.find(user => user.email === email);
-    if(user){
-        res.json(user); 
-    }
-    else{
-
-        res.json({responseCode: '001', responseMessage: 'user does not exist'})
-    }
-});
+  });
+  
 
 
 app.post('/login', async (req, res) => {
@@ -122,7 +143,7 @@ app.post('/login', async (req, res) => {
                 message: "Invalid Password!",
             });
         }else{
-          res.json({responseCode: '001', responseMessage: 'Log in successful'});
+          res.json({responseCode: '015', responseMessage: 'Log in successful'});
         }
       }
       else {
@@ -132,14 +153,58 @@ app.post('/login', async (req, res) => {
   
     } catch (error) {
       console.error(error);
-      res.status(500).json({ responseCode: '001', responseMessage: 'Internal Server Error' });
+      res.status(500).json({ responseCode: '016', responseMessage: 'Internal Server Error' });
     }
   });
+
 
 // app.get('/get_oldest_user', (req, res) => {    
 //         res.json(oldestUser); 
 // });
 
+app.post('/update_user/:_id', async (req, res) => {
+    try {
+      const id = req.params._id;
+  
+      // Use findByIdAndUpdate to update the user by _id
+      const updatedUser = await UserModel.findByIdAndUpdate(
+        id,
+        req.body,
+        { new: true } // Set to true to return the updated document
+      );
+  
+      if (updatedUser) {
+        res.json({ responseCode: '017', responseMessage: 'User updated', data: updatedUser });
+      } else {
+        res.json({ responseCode: '018', responseMessage: 'No record found' });
+      }
+  
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ responseCode: '015', responseMessage: 'Internal Server Error' });
+    }
+  });
+  
+
+  app.delete('/delete_user/:id', async (req, res) => {
+    try {
+      const id = req.params.id;
+  
+      // Use findByIdAndDelete to delete the user by _id
+      const deletedUser = await UserModel.findByIdAndDelete(id);
+  
+      if (deletedUser) {
+        res.json({ responseCode: '019', responseMessage: 'User deleted', data: deletedUser });
+      } else {
+        res.json({ responseCode: '020', responseMessage: 'No record found for deletion' });
+      }
+  
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ responseCode: '021', responseMessage: 'Internal Server Error' });
+    }
+  });
+  
 
 //start server
 app.listen(port, () => {
